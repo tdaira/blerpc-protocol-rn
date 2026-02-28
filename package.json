@@ -1,5 +1,5 @@
 {
-  "name": "blerpc-protocol-rn",
+  "name": "@blerpc/protocol-rn",
   "version": "0.6.0",
   "description": "Pure TypeScript protocol library for blerpc — container, command, and encryption layers for BLE RPC.",
   "main": "dist/index.js",
