@@ -18,21 +18,21 @@ import {
   KEY_EXCHANGE_STEP2,
   KEY_EXCHANGE_STEP3,
   KEY_EXCHANGE_STEP4,
-} from "../src";
+} from '../src';
 
-describe("ControlCmd KEY_EXCHANGE", () => {
-  test("enum value", () => {
+describe('ControlCmd KEY_EXCHANGE', () => {
+  test('enum value', () => {
     expect(ControlCmd.KEY_EXCHANGE).toBe(0x6);
   });
 
-  test("make key exchange container", () => {
+  test('make key exchange container', () => {
     const payload = new Uint8Array([0x01, ...new Array(32).fill(0x00)]);
     const c = makeKeyExchange(5, payload);
     expect(c.controlCmd).toBe(ControlCmd.KEY_EXCHANGE);
     expect(c.payload).toEqual(payload);
   });
 
-  test("key exchange roundtrip", () => {
+  test('key exchange roundtrip', () => {
     const payload = new Uint8Array([0x02, ...new Array(128).fill(0xaa)]);
     const c = makeKeyExchange(10, payload);
     const data = c.serialize();
@@ -42,12 +42,12 @@ describe("ControlCmd KEY_EXCHANGE", () => {
   });
 });
 
-describe("Capabilities flags", () => {
-  test("encryption flag constant", () => {
+describe('Capabilities flags', () => {
+  test('encryption flag constant', () => {
     expect(CAPABILITY_FLAG_ENCRYPTION_SUPPORTED).toBe(0x0001);
   });
 
-  test("capabilities request 6 bytes", () => {
+  test('capabilities request 6 bytes', () => {
     const c = makeCapabilitiesRequest(1, {
       maxRequestPayloadSize: 1024,
       maxResponsePayloadSize: 2048,
@@ -60,7 +60,7 @@ describe("Capabilities flags", () => {
     expect(bd.getUint16(4, true)).toBe(CAPABILITY_FLAG_ENCRYPTION_SUPPORTED);
   });
 
-  test("capabilities response 6 bytes", () => {
+  test('capabilities response 6 bytes', () => {
     const c = makeCapabilitiesResponse(2, {
       maxRequestPayloadSize: 4096,
       maxResponsePayloadSize: 65535,
@@ -73,13 +73,13 @@ describe("Capabilities flags", () => {
     expect(bd.getUint16(4, true)).toBe(1);
   });
 
-  test("capabilities request default flags zero", () => {
+  test('capabilities request default flags zero', () => {
     const c = makeCapabilitiesRequest(3);
     const bd = new DataView(c.payload.buffer, c.payload.byteOffset, c.payload.byteLength);
     expect(bd.getUint16(4, true)).toBe(0);
   });
 
-  test("capabilities response default flags zero", () => {
+  test('capabilities response default flags zero', () => {
     const c = makeCapabilitiesResponse(4, {
       maxRequestPayloadSize: 100,
       maxResponsePayloadSize: 200,
@@ -89,8 +89,8 @@ describe("Capabilities flags", () => {
   });
 });
 
-describe("X25519", () => {
-  test("keygen produces 32-byte keys", () => {
+describe('X25519', () => {
+  test('keygen produces 32-byte keys', () => {
     const [priv, pubkey] = BlerpcCrypto.generateX25519KeyPair();
     const pubBytes = BlerpcCrypto.x25519PublicKey(priv);
     expect(pubkey.length).toBe(32);
@@ -98,7 +98,7 @@ describe("X25519", () => {
     expect(pubkey).toEqual(pubBytes);
   });
 
-  test("shared secret agreement", () => {
+  test('shared secret agreement', () => {
     const [privA, pubA] = BlerpcCrypto.generateX25519KeyPair();
     const [privB, pubB] = BlerpcCrypto.generateX25519KeyPair();
 
@@ -109,7 +109,7 @@ describe("X25519", () => {
     expect(secretA).toEqual(secretB);
   });
 
-  test("different keys different secrets", () => {
+  test('different keys different secrets', () => {
     const [privA] = BlerpcCrypto.generateX25519KeyPair();
     const [, pubB] = BlerpcCrypto.generateX25519KeyPair();
     const [, pubC] = BlerpcCrypto.generateX25519KeyPair();
@@ -121,46 +121,46 @@ describe("X25519", () => {
   });
 });
 
-describe("Ed25519", () => {
-  test("sign verify roundtrip", () => {
+describe('Ed25519', () => {
+  test('sign verify roundtrip', () => {
     const [privkey, pubkey] = BlerpcCrypto.generateEd25519KeyPair();
-    const message = new TextEncoder().encode("test message");
+    const message = new TextEncoder().encode('test message');
     const signature = BlerpcCrypto.ed25519Sign(privkey, message);
 
     expect(signature.length).toBe(64);
     expect(BlerpcCrypto.ed25519Verify(pubkey, message, signature)).toBe(true);
   });
 
-  test("verify wrong message fails", () => {
+  test('verify wrong message fails', () => {
     const [privkey, pubkey] = BlerpcCrypto.generateEd25519KeyPair();
     const signature = BlerpcCrypto.ed25519Sign(
       privkey,
-      new TextEncoder().encode("correct message"),
+      new TextEncoder().encode('correct message'),
     );
     expect(
-      BlerpcCrypto.ed25519Verify(pubkey, new TextEncoder().encode("wrong message"), signature),
+      BlerpcCrypto.ed25519Verify(pubkey, new TextEncoder().encode('wrong message'), signature),
     ).toBe(false);
   });
 
-  test("verify wrong key fails", () => {
+  test('verify wrong key fails', () => {
     const [priv1, pub1] = BlerpcCrypto.generateEd25519KeyPair();
     const [, pub2] = BlerpcCrypto.generateEd25519KeyPair();
 
-    const message = new TextEncoder().encode("test");
+    const message = new TextEncoder().encode('test');
     const signature = BlerpcCrypto.ed25519Sign(priv1, message);
     expect(BlerpcCrypto.ed25519Verify(pub1, message, signature)).toBe(true);
     expect(BlerpcCrypto.ed25519Verify(pub2, message, signature)).toBe(false);
   });
 
-  test("public key from private key", () => {
+  test('public key from private key', () => {
     const [privkey, pubkey] = BlerpcCrypto.generateEd25519KeyPair();
     const derived = BlerpcCrypto.ed25519PublicKey(privkey);
     expect(derived).toEqual(pubkey);
   });
 });
 
-describe("Session key derivation", () => {
-  test("derive produces 16 bytes", () => {
+describe('Session key derivation', () => {
+  test('derive produces 16 bytes', () => {
     const shared = new Uint8Array(32).fill(0x42);
     const cPub = new Uint8Array(32).fill(0xaa);
     const pPub = new Uint8Array(32).fill(0xbb);
@@ -168,7 +168,7 @@ describe("Session key derivation", () => {
     expect(key.length).toBe(16);
   });
 
-  test("same inputs same key", () => {
+  test('same inputs same key', () => {
     const shared = new Uint8Array(32).fill(0x42);
     const cPub = new Uint8Array(32).fill(0xaa);
     const pPub = new Uint8Array(32).fill(0xbb);
@@ -177,7 +177,7 @@ describe("Session key derivation", () => {
     expect(key1).toEqual(key2);
   });
 
-  test("different pubkeys different key", () => {
+  test('different pubkeys different key', () => {
     const shared = new Uint8Array(32).fill(0x42);
     const cPubA = new Uint8Array(32).fill(0xaa);
     const cPubB = new Uint8Array(32).fill(0xcc);
@@ -188,10 +188,10 @@ describe("Session key derivation", () => {
   });
 });
 
-describe("AES-GCM encrypt/decrypt", () => {
-  test("encrypt decrypt command roundtrip", () => {
+describe('AES-GCM encrypt/decrypt', () => {
+  test('encrypt decrypt command roundtrip', () => {
     const key = new Uint8Array(16).fill(0x01);
-    const plaintext = new TextEncoder().encode("Hello, blerpc!");
+    const plaintext = new TextEncoder().encode('Hello, blerpc!');
     const encrypted = BlerpcCrypto.encryptCommand(key, 0, DIRECTION_C2P, plaintext);
 
     expect(encrypted.length).toBe(4 + plaintext.length + 16);
@@ -201,50 +201,50 @@ describe("AES-GCM encrypt/decrypt", () => {
     expect(decrypted).toEqual(plaintext);
   });
 
-  test("different directions produce different ciphertext", () => {
+  test('different directions produce different ciphertext', () => {
     const key = new Uint8Array(16).fill(0x01);
-    const plaintext = new TextEncoder().encode("test");
+    const plaintext = new TextEncoder().encode('test');
     const encC2P = BlerpcCrypto.encryptCommand(key, 0, DIRECTION_C2P, plaintext);
     const encP2C = BlerpcCrypto.encryptCommand(key, 0, DIRECTION_P2C, plaintext);
     expect(encC2P).not.toEqual(encP2C);
   });
 
-  test("wrong direction fails decrypt", () => {
+  test('wrong direction fails decrypt', () => {
     const key = new Uint8Array(16).fill(0x01);
     const encrypted = BlerpcCrypto.encryptCommand(
       key,
       0,
       DIRECTION_C2P,
-      new TextEncoder().encode("test"),
+      new TextEncoder().encode('test'),
     );
     expect(() => BlerpcCrypto.decryptCommand(key, DIRECTION_P2C, encrypted)).toThrow();
   });
 
-  test("wrong key fails decrypt", () => {
+  test('wrong key fails decrypt', () => {
     const key1 = new Uint8Array(16).fill(0x01);
     const key2 = new Uint8Array(16).fill(0x02);
     const encrypted = BlerpcCrypto.encryptCommand(
       key1,
       0,
       DIRECTION_C2P,
-      new TextEncoder().encode("test"),
+      new TextEncoder().encode('test'),
     );
     expect(() => BlerpcCrypto.decryptCommand(key2, DIRECTION_C2P, encrypted)).toThrow();
   });
 
-  test("counter embedded in output", () => {
+  test('counter embedded in output', () => {
     const key = new Uint8Array(16).fill(0x01);
     const encrypted = BlerpcCrypto.encryptCommand(
       key,
       42,
       DIRECTION_C2P,
-      new TextEncoder().encode("data"),
+      new TextEncoder().encode('data'),
     );
     const bd = new DataView(encrypted.buffer, encrypted.byteOffset, encrypted.byteLength);
     expect(bd.getUint32(0, true)).toBe(42);
   });
 
-  test("empty plaintext", () => {
+  test('empty plaintext', () => {
     const key = new Uint8Array(16).fill(0x01);
     const encrypted = BlerpcCrypto.encryptCommand(key, 0, DIRECTION_C2P, new Uint8Array(0));
     const [counter, decrypted] = BlerpcCrypto.decryptCommand(key, DIRECTION_C2P, encrypted);
@@ -252,7 +252,7 @@ describe("AES-GCM encrypt/decrypt", () => {
     expect(decrypted.length).toBe(0);
   });
 
-  test("large plaintext", () => {
+  test('large plaintext', () => {
     const key = new Uint8Array(16).fill(0x01);
     const plaintext = new Uint8Array(10000).fill(0xff);
     const encrypted = BlerpcCrypto.encryptCommand(key, 0, DIRECTION_C2P, plaintext);
@@ -260,7 +260,7 @@ describe("AES-GCM encrypt/decrypt", () => {
     expect(decrypted).toEqual(plaintext);
   });
 
-  test("decrypt too short raises", () => {
+  test('decrypt too short raises', () => {
     const key = new Uint8Array(16).fill(0x01);
     expect(() => BlerpcCrypto.decryptCommand(key, DIRECTION_C2P, new Uint8Array(19))).toThrow(
       /too short/,
@@ -268,8 +268,8 @@ describe("AES-GCM encrypt/decrypt", () => {
   });
 });
 
-describe("Confirmation", () => {
-  test("encrypt decrypt confirmation roundtrip", () => {
+describe('Confirmation', () => {
+  test('encrypt decrypt confirmation roundtrip', () => {
     const key = new Uint8Array(16).fill(0x01);
     const encrypted = BlerpcCrypto.encryptConfirmation(key, CONFIRM_CENTRAL);
     expect(encrypted.length).toBe(44);
@@ -278,14 +278,14 @@ describe("Confirmation", () => {
     expect(plaintext).toEqual(CONFIRM_CENTRAL);
   });
 
-  test("different messages different output", () => {
+  test('different messages different output', () => {
     const key = new Uint8Array(16).fill(0x01);
     const encC = BlerpcCrypto.encryptConfirmation(key, CONFIRM_CENTRAL);
     const encP = BlerpcCrypto.encryptConfirmation(key, CONFIRM_PERIPHERAL);
     expect(encC).not.toEqual(encP);
   });
 
-  test("wrong key fails", () => {
+  test('wrong key fails', () => {
     const key1 = new Uint8Array(16).fill(0x01);
     const key2 = new Uint8Array(16).fill(0x02);
     const encrypted = BlerpcCrypto.encryptConfirmation(key1, CONFIRM_CENTRAL);
@@ -293,8 +293,8 @@ describe("Confirmation", () => {
   });
 });
 
-describe("Step payloads", () => {
-  test("step1 build parse", () => {
+describe('Step payloads', () => {
+  test('step1 build parse', () => {
     const pubkey = new Uint8Array(32).fill(0xaa);
     const payload = BlerpcCrypto.buildStep1Payload(pubkey);
     expect(payload.length).toBe(33);
@@ -303,7 +303,7 @@ describe("Step payloads", () => {
     expect(parsed).toEqual(pubkey);
   });
 
-  test("step2 build parse", () => {
+  test('step2 build parse', () => {
     const x25519Pub = new Uint8Array(32).fill(0xaa);
     const signature = new Uint8Array(64).fill(0xbb);
     const ed25519Pub = new Uint8Array(32).fill(0xcc);
@@ -316,7 +316,7 @@ describe("Step payloads", () => {
     expect(pEd25519).toEqual(ed25519Pub);
   });
 
-  test("step3 build parse", () => {
+  test('step3 build parse', () => {
     const encrypted = new Uint8Array(44).fill(0xdd);
     const payload = BlerpcCrypto.buildStep3Payload(encrypted);
     expect(payload.length).toBe(45);
@@ -325,7 +325,7 @@ describe("Step payloads", () => {
     expect(parsed).toEqual(encrypted);
   });
 
-  test("step4 build parse", () => {
+  test('step4 build parse', () => {
     const encrypted = new Uint8Array(44).fill(0xee);
     const payload = BlerpcCrypto.buildStep4Payload(encrypted);
     expect(payload.length).toBe(45);
@@ -334,27 +334,27 @@ describe("Step payloads", () => {
     expect(parsed).toEqual(encrypted);
   });
 
-  test("step1 invalid short", () => {
+  test('step1 invalid short', () => {
     expect(() =>
       BlerpcCrypto.parseStep1Payload(new Uint8Array([0x01, ...new Array(10).fill(0x00)])),
     ).toThrow(/Invalid step 1/);
   });
 
-  test("step1 invalid step byte", () => {
+  test('step1 invalid step byte', () => {
     expect(() =>
       BlerpcCrypto.parseStep1Payload(new Uint8Array([0x02, ...new Array(32).fill(0x00)])),
     ).toThrow(/Invalid step 1/);
   });
 
-  test("step2 invalid short", () => {
+  test('step2 invalid short', () => {
     expect(() =>
       BlerpcCrypto.parseStep2Payload(new Uint8Array([0x02, ...new Array(50).fill(0x00)])),
     ).toThrow(/Invalid step 2/);
   });
 });
 
-describe("Full key exchange flow", () => {
-  test("full handshake", () => {
+describe('Full key exchange flow', () => {
+  test('full handshake', () => {
     // Peripheral's long-term keys
     const [periphEdPriv, periphEdPub] = BlerpcCrypto.generateEd25519KeyPair();
     const [periphXPriv, periphXPub] = BlerpcCrypto.generateX25519KeyPair();
@@ -399,11 +399,11 @@ describe("Full key exchange flow", () => {
     expect(decConfirmP).toEqual(CONFIRM_PERIPHERAL);
   });
 
-  test("encrypted command after handshake", () => {
+  test('encrypted command after handshake', () => {
     const key = new Uint8Array(16).fill(0x01);
 
     // Central sends encrypted command (C->P)
-    const plaintext = new TextEncoder().encode("echo request data");
+    const plaintext = new TextEncoder().encode('echo request data');
     const encrypted = BlerpcCrypto.encryptCommand(key, 0, DIRECTION_C2P, plaintext);
 
     // Peripheral decrypts
@@ -412,7 +412,7 @@ describe("Full key exchange flow", () => {
     expect(decrypted).toEqual(plaintext);
 
     // Peripheral sends encrypted response (P->C)
-    const respPlaintext = new TextEncoder().encode("echo response data");
+    const respPlaintext = new TextEncoder().encode('echo response data');
     const respEncrypted = BlerpcCrypto.encryptCommand(key, 0, DIRECTION_P2C, respPlaintext);
 
     // Central decrypts
@@ -425,7 +425,7 @@ describe("Full key exchange flow", () => {
     expect(respDecrypted).toEqual(respPlaintext);
   });
 
-  test("counter monotonic increase", () => {
+  test('counter monotonic increase', () => {
     const key = new Uint8Array(16).fill(0x01);
     const encoder = new TextEncoder();
 
@@ -443,34 +443,34 @@ describe("Full key exchange flow", () => {
   });
 });
 
-describe("BlerpcCryptoSession", () => {
-  test("encrypt decrypt roundtrip", () => {
+describe('BlerpcCryptoSession', () => {
+  test('encrypt decrypt roundtrip', () => {
     const key = new Uint8Array(16).fill(0x01);
     const central = new BlerpcCryptoSession(key, true);
     const peripheral = new BlerpcCryptoSession(key, false);
 
-    const plaintext = new TextEncoder().encode("Hello, blerpc!");
+    const plaintext = new TextEncoder().encode('Hello, blerpc!');
     const encrypted = central.encrypt(plaintext);
     const decrypted = peripheral.decrypt(encrypted);
     expect(decrypted).toEqual(plaintext);
   });
 
-  test("bidirectional", () => {
+  test('bidirectional', () => {
     const key = new Uint8Array(16).fill(0x01);
     const central = new BlerpcCryptoSession(key, true);
     const peripheral = new BlerpcCryptoSession(key, false);
     const encoder = new TextEncoder();
 
     // Central -> Peripheral
-    const enc1 = central.encrypt(encoder.encode("request"));
-    expect(peripheral.decrypt(enc1)).toEqual(encoder.encode("request"));
+    const enc1 = central.encrypt(encoder.encode('request'));
+    expect(peripheral.decrypt(enc1)).toEqual(encoder.encode('request'));
 
     // Peripheral -> Central
-    const enc2 = peripheral.encrypt(encoder.encode("response"));
-    expect(central.decrypt(enc2)).toEqual(encoder.encode("response"));
+    const enc2 = peripheral.encrypt(encoder.encode('response'));
+    expect(central.decrypt(enc2)).toEqual(encoder.encode('response'));
   });
 
-  test("counter auto increment", () => {
+  test('counter auto increment', () => {
     const key = new Uint8Array(16).fill(0x01);
     const central = new BlerpcCryptoSession(key, true);
     const peripheral = new BlerpcCryptoSession(key, false);
@@ -484,14 +484,14 @@ describe("BlerpcCryptoSession", () => {
     }
   });
 
-  test("replay detection", () => {
+  test('replay detection', () => {
     const key = new Uint8Array(16).fill(0x01);
     const central = new BlerpcCryptoSession(key, true);
     const peripheral = new BlerpcCryptoSession(key, false);
     const encoder = new TextEncoder();
 
-    const enc0 = central.encrypt(encoder.encode("msg0"));
-    const enc1 = central.encrypt(encoder.encode("msg1"));
+    const enc0 = central.encrypt(encoder.encode('msg0'));
+    const enc1 = central.encrypt(encoder.encode('msg1'));
 
     peripheral.decrypt(enc0);
     peripheral.decrypt(enc1);
@@ -500,43 +500,43 @@ describe("BlerpcCryptoSession", () => {
     expect(() => peripheral.decrypt(enc0)).toThrow(/Replay/);
   });
 
-  test("counter zero replay attack", () => {
+  test('counter zero replay attack', () => {
     const key = new Uint8Array(16).fill(0x01);
     const central = new BlerpcCryptoSession(key, true);
     const peripheral = new BlerpcCryptoSession(key, false);
     const encoder = new TextEncoder();
 
-    const enc0 = central.encrypt(encoder.encode("msg0"));
+    const enc0 = central.encrypt(encoder.encode('msg0'));
     peripheral.decrypt(enc0);
 
     // Replaying counter-0 message should fail
     expect(() => peripheral.decrypt(enc0)).toThrow(/Replay/);
   });
 
-  test("wrong direction fails", () => {
+  test('wrong direction fails', () => {
     const key = new Uint8Array(16).fill(0x01);
     const central = new BlerpcCryptoSession(key, true);
 
-    const enc = central.encrypt(new TextEncoder().encode("test"));
+    const enc = central.encrypt(new TextEncoder().encode('test'));
     expect(() => central.decrypt(enc)).toThrow();
   });
 });
 
-describe("CentralKeyExchange", () => {
+describe('CentralKeyExchange', () => {
   function makePeripheralKeys(): [Uint8Array, Uint8Array, Uint8Array, Uint8Array] {
     const [xPriv, xPub] = BlerpcCrypto.generateX25519KeyPair();
     const [edPriv, edPub] = BlerpcCrypto.generateEd25519KeyPair();
     return [xPriv, xPub, edPriv, edPub];
   }
 
-  test("start produces step1", () => {
+  test('start produces step1', () => {
     const kx = new CentralKeyExchange();
     const step1 = kx.start();
     expect(step1.length).toBe(33);
     expect(step1[0]).toBe(KEY_EXCHANGE_STEP1);
   });
 
-  test("processStep2 verifies signature", () => {
+  test('processStep2 verifies signature', () => {
     const kx = new CentralKeyExchange();
     const step1 = kx.start();
     const centralPub = BlerpcCrypto.parseStep1Payload(step1);
@@ -552,7 +552,7 @@ describe("CentralKeyExchange", () => {
     expect(step3[0]).toBe(KEY_EXCHANGE_STEP3);
   });
 
-  test("processStep2 bad signature raises", () => {
+  test('processStep2 bad signature raises', () => {
     const kx = new CentralKeyExchange();
     kx.start();
 
@@ -563,7 +563,7 @@ describe("CentralKeyExchange", () => {
     expect(() => kx.processStep2(step2)).toThrow(/signature/);
   });
 
-  test("verify key callback reject", () => {
+  test('verify key callback reject', () => {
     const kx = new CentralKeyExchange();
     const step1 = kx.start();
     const centralPub = BlerpcCrypto.parseStep1Payload(step1);
@@ -576,7 +576,7 @@ describe("CentralKeyExchange", () => {
     expect(() => kx.processStep2(step2, () => false)).toThrow(/rejected/);
   });
 
-  test("verify key callback accept", () => {
+  test('verify key callback accept', () => {
     const kx = new CentralKeyExchange();
     const step1 = kx.start();
     const centralPub = BlerpcCrypto.parseStep1Payload(step1);
@@ -596,8 +596,8 @@ describe("CentralKeyExchange", () => {
   });
 });
 
-describe("PeripheralKeyExchange", () => {
-  test("processStep1 produces step2", () => {
+describe('PeripheralKeyExchange', () => {
+  test('processStep1 produces step2', () => {
     const [edPriv, edPub] = BlerpcCrypto.generateEd25519KeyPair();
     const kx = new PeripheralKeyExchange(edPriv, edPub);
     const [, centralXPub] = BlerpcCrypto.generateX25519KeyPair();
@@ -608,7 +608,7 @@ describe("PeripheralKeyExchange", () => {
     expect(step2[0]).toBe(KEY_EXCHANGE_STEP2);
   });
 
-  test("processStep3 bad confirmation raises", () => {
+  test('processStep3 bad confirmation raises', () => {
     const [edPriv, edPub] = BlerpcCrypto.generateEd25519KeyPair();
     const kx = new PeripheralKeyExchange(edPriv, edPub);
     const [, centralXPub] = BlerpcCrypto.generateX25519KeyPair();
@@ -618,7 +618,7 @@ describe("PeripheralKeyExchange", () => {
     // Build a step 3 with wrong confirmation text
     const badEncrypted = BlerpcCrypto.encryptConfirmation(
       kx.sessionKey!,
-      new TextEncoder().encode("WRONG_CONFIRM_XX"),
+      new TextEncoder().encode('WRONG_CONFIRM_XX'),
     );
     const badStep3 = BlerpcCrypto.buildStep3Payload(badEncrypted);
 
@@ -626,8 +626,8 @@ describe("PeripheralKeyExchange", () => {
   });
 });
 
-describe("Key exchange integration", () => {
-  test("full handshake and session", () => {
+describe('Key exchange integration', () => {
+  test('full handshake and session', () => {
     const [periphEdPriv, periphEdPub] = BlerpcCrypto.generateEd25519KeyPair();
 
     const centralKx = new CentralKeyExchange();
@@ -642,14 +642,14 @@ describe("Key exchange integration", () => {
     const encoder = new TextEncoder();
 
     // Bidirectional encrypted communication
-    const encReq = centralSession.encrypt(encoder.encode("echo request"));
-    expect(periphSession.decrypt(encReq)).toEqual(encoder.encode("echo request"));
+    const encReq = centralSession.encrypt(encoder.encode('echo request'));
+    expect(periphSession.decrypt(encReq)).toEqual(encoder.encode('echo request'));
 
-    const encResp = periphSession.encrypt(encoder.encode("echo response"));
-    expect(centralSession.decrypt(encResp)).toEqual(encoder.encode("echo response"));
+    const encResp = periphSession.encrypt(encoder.encode('echo response'));
+    expect(centralSession.decrypt(encResp)).toEqual(encoder.encode('echo response'));
   });
 
-  test("handshake with verify callback", () => {
+  test('handshake with verify callback', () => {
     const [periphEdPriv, periphEdPub] = BlerpcCrypto.generateEd25519KeyPair();
 
     const centralKx = new CentralKeyExchange();
@@ -669,11 +669,11 @@ describe("Key exchange integration", () => {
     const centralSession = centralKx.finish(step4);
 
     const encoder = new TextEncoder();
-    const enc = centralSession.encrypt(encoder.encode("test"));
-    expect(periphSession.decrypt(enc)).toEqual(encoder.encode("test"));
+    const enc = centralSession.encrypt(encoder.encode('test'));
+    expect(periphSession.decrypt(enc)).toEqual(encoder.encode('test'));
   });
 
-  test("multiple messages after handshake", () => {
+  test('multiple messages after handshake', () => {
     const [periphEdPriv, periphEdPub] = BlerpcCrypto.generateEd25519KeyPair();
 
     const centralKx = new CentralKeyExchange();
@@ -698,8 +698,8 @@ describe("Key exchange integration", () => {
   });
 });
 
-describe("Peripheral handleStep", () => {
-  test("handle step 1", () => {
+describe('Peripheral handleStep', () => {
+  test('handle step 1', () => {
     const [edPriv, edPub] = BlerpcCrypto.generateEd25519KeyPair();
     const kx = new PeripheralKeyExchange(edPriv, edPub);
     const [, centralXPub] = BlerpcCrypto.generateX25519KeyPair();
@@ -711,7 +711,7 @@ describe("Peripheral handleStep", () => {
     expect(session).toBeNull();
   });
 
-  test("handle step 3", () => {
+  test('handle step 3', () => {
     const [edPriv, edPub] = BlerpcCrypto.generateEd25519KeyPair();
     const kx = new PeripheralKeyExchange(edPriv, edPub);
     const centralKx = new CentralKeyExchange();
@@ -727,7 +727,7 @@ describe("Peripheral handleStep", () => {
     expect(session2).not.toBeNull();
   });
 
-  test("handle step invalid", () => {
+  test('handle step invalid', () => {
     const [edPriv, edPub] = BlerpcCrypto.generateEd25519KeyPair();
     const kx = new PeripheralKeyExchange(edPriv, edPub);
     expect(() => kx.handleStep(new Uint8Array([0x02, ...new Array(128).fill(0x00)]))).toThrow(
@@ -735,15 +735,15 @@ describe("Peripheral handleStep", () => {
     );
   });
 
-  test("handle step empty payload", () => {
+  test('handle step empty payload', () => {
     const [edPriv, edPub] = BlerpcCrypto.generateEd25519KeyPair();
     const kx = new PeripheralKeyExchange(edPriv, edPub);
     expect(() => kx.handleStep(new Uint8Array(0))).toThrow(/Empty/);
   });
 });
 
-describe("centralPerformKeyExchange", () => {
-  test("full handshake", async () => {
+describe('centralPerformKeyExchange', () => {
+  test('full handshake', async () => {
     const [periphEdPriv, periphEdPub] = BlerpcCrypto.generateEd25519KeyPair();
     const periphKx = new PeripheralKeyExchange(periphEdPriv, periphEdPub);
 
@@ -765,11 +765,11 @@ describe("centralPerformKeyExchange", () => {
 
     // Verify session works
     const periphSession = new BlerpcCryptoSession(periphKx.sessionKey!, false);
-    const enc = session.encrypt(new TextEncoder().encode("test"));
-    expect(periphSession.decrypt(enc)).toEqual(new TextEncoder().encode("test"));
+    const enc = session.encrypt(new TextEncoder().encode('test'));
+    expect(periphSession.decrypt(enc)).toEqual(new TextEncoder().encode('test'));
   });
 
-  test("verify callback reject", async () => {
+  test('verify callback reject', async () => {
     const [periphEdPriv, periphEdPub] = BlerpcCrypto.generateEd25519KeyPair();
     const periphKx = new PeripheralKeyExchange(periphEdPriv, periphEdPub);
 
@@ -793,7 +793,7 @@ describe("centralPerformKeyExchange", () => {
     ).rejects.toThrow(/rejected/);
   });
 
-  test("verify callback accept", async () => {
+  test('verify callback accept', async () => {
     const [periphEdPriv, periphEdPub] = BlerpcCrypto.generateEd25519KeyPair();
     const periphKx = new PeripheralKeyExchange(periphEdPriv, periphEdPub);
 
@@ -822,37 +822,37 @@ describe("centralPerformKeyExchange", () => {
   });
 });
 
-describe("Key exchange state validation", () => {
-  test("central processStep2 before start raises", () => {
+describe('Key exchange state validation', () => {
+  test('central processStep2 before start raises', () => {
     const kx = new CentralKeyExchange();
     expect(() => kx.processStep2(new Uint8Array([0x02, ...new Array(128).fill(0x00)]))).toThrow();
   });
 
-  test("central finish before processStep2 raises", () => {
+  test('central finish before processStep2 raises', () => {
     const kx = new CentralKeyExchange();
     kx.start();
     expect(() => kx.finish(new Uint8Array([0x04, ...new Array(44).fill(0x00)]))).toThrow();
   });
 
-  test("central double start raises", () => {
+  test('central double start raises', () => {
     const kx = new CentralKeyExchange();
     kx.start();
     expect(() => kx.start()).toThrow();
   });
 
-  test("peripheral processStep3 before step1 raises", () => {
+  test('peripheral processStep3 before step1 raises', () => {
     const [edPriv, edPub] = BlerpcCrypto.generateEd25519KeyPair();
     const kx = new PeripheralKeyExchange(edPriv, edPub);
     expect(() => kx.processStep3(new Uint8Array([0x03, ...new Array(44).fill(0x00)]))).toThrow();
   });
 
-  test("peripheral handleStep3 before step1 raises", () => {
+  test('peripheral handleStep3 before step1 raises', () => {
     const [edPriv, edPub] = BlerpcCrypto.generateEd25519KeyPair();
     const kx = new PeripheralKeyExchange(edPriv, edPub);
     expect(() => kx.handleStep(new Uint8Array([0x03, ...new Array(44).fill(0x00)]))).toThrow();
   });
 
-  test("peripheral double step1 raises", () => {
+  test('peripheral double step1 raises', () => {
     const [edPriv, edPub] = BlerpcCrypto.generateEd25519KeyPair();
     const kx = new PeripheralKeyExchange(edPriv, edPub);
     const centralKx = new CentralKeyExchange();
@@ -861,7 +861,7 @@ describe("Key exchange state validation", () => {
     expect(() => kx.processStep1(step1)).toThrow();
   });
 
-  test("peripheral reset allows new handshake", () => {
+  test('peripheral reset allows new handshake', () => {
     const [edPriv, edPub] = BlerpcCrypto.generateEd25519KeyPair();
     const kx = new PeripheralKeyExchange(edPriv, edPub);
 
@@ -878,19 +878,19 @@ describe("Key exchange state validation", () => {
   });
 });
 
-describe("CryptoSession counter overflow", () => {
-  test("encrypt at max counter raises", () => {
+describe('CryptoSession counter overflow', () => {
+  test('encrypt at max counter raises', () => {
     const key = new Uint8Array(16).fill(0x01);
     const session = new BlerpcCryptoSession(key, true);
     session.txCounter = 0xffffffff;
-    expect(() => session.encrypt(new TextEncoder().encode("test"))).toThrow(/overflow/);
+    expect(() => session.encrypt(new TextEncoder().encode('test'))).toThrow(/overflow/);
   });
 
-  test("encrypt below max counter works", () => {
+  test('encrypt below max counter works', () => {
     const key = new Uint8Array(16).fill(0x01);
     const session = new BlerpcCryptoSession(key, true);
     session.txCounter = 0xfffffffe;
-    const encrypted = session.encrypt(new TextEncoder().encode("test"));
+    const encrypted = session.encrypt(new TextEncoder().encode('test'));
     expect(encrypted.length).toBeGreaterThan(0);
   });
 });

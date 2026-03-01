@@ -1,11 +1,11 @@
 // E2E encryption for blerpc using X25519, Ed25519, AES-128-GCM, HKDF-SHA256.
 
-import { x25519 } from "@noble/curves/ed25519";
-import { ed25519 } from "@noble/curves/ed25519";
-import { gcm } from "@noble/ciphers/aes";
-import { randomBytes } from "@noble/ciphers/webcrypto";
-import { hkdf } from "@noble/hashes/hkdf";
-import { sha256 } from "@noble/hashes/sha256";
+import { x25519 } from '@noble/curves/ed25519';
+import { ed25519 } from '@noble/curves/ed25519';
+import { gcm } from '@noble/ciphers/aes';
+import { randomBytes } from '@noble/ciphers/webcrypto';
+import { hkdf } from '@noble/hashes/hkdf';
+import { sha256 } from '@noble/hashes/sha256';
 
 // Direction bytes for nonce construction
 export const DIRECTION_C2P = 0x00;
@@ -13,8 +13,8 @@ export const DIRECTION_P2C = 0x01;
 
 // Confirmation plaintexts
 const encoder = new TextEncoder();
-export const CONFIRM_CENTRAL = encoder.encode("BLERPC_CONFIRM_C");
-export const CONFIRM_PERIPHERAL = encoder.encode("BLERPC_CONFIRM_P");
+export const CONFIRM_CENTRAL = encoder.encode('BLERPC_CONFIRM_C');
+export const CONFIRM_PERIPHERAL = encoder.encode('BLERPC_CONFIRM_P');
 
 // Key exchange step constants
 export const KEY_EXCHANGE_STEP1 = 0x01;
@@ -72,7 +72,7 @@ export class BlerpcCrypto {
     peripheralPubkey: Uint8Array,
   ): Uint8Array {
     const salt = concatBytes(centralPubkey, peripheralPubkey);
-    const info = encoder.encode("blerpc-session-key");
+    const info = encoder.encode('blerpc-session-key');
     return hkdf(sha256, sharedSecret, salt, info, 16);
   }
 
@@ -191,7 +191,7 @@ export class BlerpcCrypto {
   /** Parse KEY_EXCHANGE step 1 payload. Returns central_x25519_pubkey (32 bytes). */
   static parseStep1Payload(data: Uint8Array): Uint8Array {
     if (data.length < 33 || data[0] !== KEY_EXCHANGE_STEP1) {
-      throw new Error("Invalid step 1 payload");
+      throw new Error('Invalid step 1 payload');
     }
     return data.slice(1, 33);
   }
@@ -216,7 +216,7 @@ export class BlerpcCrypto {
   /** Parse KEY_EXCHANGE step 2 payload. Returns [peripheral_x25519_pubkey, signature, peripheral_ed25519_pubkey]. */
   static parseStep2Payload(data: Uint8Array): [Uint8Array, Uint8Array, Uint8Array] {
     if (data.length < 129 || data[0] !== KEY_EXCHANGE_STEP2) {
-      throw new Error("Invalid step 2 payload");
+      throw new Error('Invalid step 2 payload');
     }
     return [data.slice(1, 33), data.slice(33, 97), data.slice(97, 129)];
   }
@@ -229,7 +229,7 @@ export class BlerpcCrypto {
   /** Parse KEY_EXCHANGE step 3 payload. Returns the encrypted confirmation (44 bytes). */
   static parseStep3Payload(data: Uint8Array): Uint8Array {
     if (data.length < 45 || data[0] !== KEY_EXCHANGE_STEP3) {
-      throw new Error("Invalid step 3 payload");
+      throw new Error('Invalid step 3 payload');
     }
     return data.slice(1, 45);
   }
@@ -242,7 +242,7 @@ export class BlerpcCrypto {
   /** Parse KEY_EXCHANGE step 4 payload. Returns the encrypted confirmation (44 bytes). */
   static parseStep4Payload(data: Uint8Array): Uint8Array {
     if (data.length < 45 || data[0] !== KEY_EXCHANGE_STEP4) {
-      throw new Error("Invalid step 4 payload");
+      throw new Error('Invalid step 4 payload');
     }
     return data.slice(1, 45);
   }
@@ -268,7 +268,7 @@ export class BlerpcCryptoSession {
   /** Encrypt plaintext with auto-incrementing TX counter. */
   encrypt(plaintext: Uint8Array): Uint8Array {
     if (this.txCounter >= 0xffffffff) {
-      throw new Error("TX counter overflow: session must be rekeyed");
+      throw new Error('TX counter overflow: session must be rekeyed');
     }
     const encrypted = BlerpcCrypto.encryptCommand(
       this._sessionKey,
@@ -313,7 +313,7 @@ export class CentralKeyExchange {
 
   /** Generate ephemeral X25519 keypair and return step 1 payload. */
   start(): Uint8Array {
-    if (this._state !== 0) throw new Error("Invalid state for start()");
+    if (this._state !== 0) throw new Error('Invalid state for start()');
     const [priv, pub] = BlerpcCrypto.generateX25519KeyPair();
     this._x25519PrivKey = priv;
     this._x25519Pubkey = pub;
@@ -323,7 +323,7 @@ export class CentralKeyExchange {
 
   /** Parse step 2, verify signature, derive session key, return step 3 payload. */
   processStep2(step2Payload: Uint8Array, verifyKeyCb?: (key: Uint8Array) => boolean): Uint8Array {
-    if (this._state !== 1) throw new Error("Invalid state for processStep2()");
+    if (this._state !== 1) throw new Error('Invalid state for processStep2()');
 
     const [periphX25519Pub, signature, periphEd25519Pub] =
       BlerpcCrypto.parseStep2Payload(step2Payload);
@@ -331,11 +331,11 @@ export class CentralKeyExchange {
     const signMsg = concatBytes(this._x25519Pubkey!, periphX25519Pub);
     const valid = BlerpcCrypto.ed25519Verify(periphEd25519Pub, signMsg, signature);
     if (!valid) {
-      throw new Error("Ed25519 signature verification failed");
+      throw new Error('Ed25519 signature verification failed');
     }
 
     if (verifyKeyCb && !verifyKeyCb(periphEd25519Pub)) {
-      throw new Error("Peripheral key rejected by verify callback");
+      throw new Error('Peripheral key rejected by verify callback');
     }
 
     const sharedSecret = BlerpcCrypto.x25519SharedSecret(this._x25519PrivKey!, periphX25519Pub);
@@ -352,11 +352,11 @@ export class CentralKeyExchange {
 
   /** Parse step 4, verify peripheral confirmation, return session. */
   finish(step4Payload: Uint8Array): BlerpcCryptoSession {
-    if (this._state !== 2) throw new Error("Invalid state for finish()");
+    if (this._state !== 2) throw new Error('Invalid state for finish()');
     const encryptedPeriph = BlerpcCrypto.parseStep4Payload(step4Payload);
     const plaintext = BlerpcCrypto.decryptConfirmation(this._sessionKey!, encryptedPeriph);
     if (!uint8ArrayEquals(plaintext, CONFIRM_PERIPHERAL)) {
-      throw new Error("Peripheral confirmation mismatch");
+      throw new Error('Peripheral confirmation mismatch');
     }
     return new BlerpcCryptoSession(this._sessionKey!, true);
   }
@@ -388,7 +388,7 @@ export class PeripheralKeyExchange {
 
   /** Parse step 1, generate ephemeral X25519 keypair, sign, derive session key, return step 2 payload. */
   processStep1(step1Payload: Uint8Array): Uint8Array {
-    if (this._state !== 0) throw new Error("Invalid state for processStep1()");
+    if (this._state !== 0) throw new Error('Invalid state for processStep1()');
     const centralX25519Pub = BlerpcCrypto.parseStep1Payload(step1Payload);
 
     const [x25519Priv, x25519Pub] = BlerpcCrypto.generateX25519KeyPair();
@@ -405,11 +405,11 @@ export class PeripheralKeyExchange {
 
   /** Parse step 3, verify confirmation, return [step4Payload, session]. */
   processStep3(step3Payload: Uint8Array): [Uint8Array, BlerpcCryptoSession] {
-    if (this._state !== 1) throw new Error("Invalid state for processStep3()");
+    if (this._state !== 1) throw new Error('Invalid state for processStep3()');
     const encrypted = BlerpcCrypto.parseStep3Payload(step3Payload);
     const plaintext = BlerpcCrypto.decryptConfirmation(this._sessionKey!, encrypted);
     if (!uint8ArrayEquals(plaintext, CONFIRM_CENTRAL)) {
-      throw new Error("Central confirmation mismatch");
+      throw new Error('Central confirmation mismatch');
     }
 
     const encryptedConfirm = BlerpcCrypto.encryptConfirmation(
@@ -428,20 +428,20 @@ export class PeripheralKeyExchange {
    */
   handleStep(payload: Uint8Array): [Uint8Array, BlerpcCryptoSession | null] {
     if (payload.length === 0) {
-      throw new Error("Empty key exchange payload");
+      throw new Error('Empty key exchange payload');
     }
 
     const step = payload[0];
     if (step === KEY_EXCHANGE_STEP1) {
-      if (this._state !== 0) throw new Error("Invalid state for step 1");
+      if (this._state !== 0) throw new Error('Invalid state for step 1');
       const response = this.processStep1(payload);
       return [response, null];
     } else if (step === KEY_EXCHANGE_STEP3) {
-      if (this._state !== 1) throw new Error("Invalid state for step 3");
+      if (this._state !== 1) throw new Error('Invalid state for step 3');
       const [step4, session] = this.processStep3(payload);
       return [step4, session];
     } else {
-      throw new Error(`Invalid key exchange step: 0x${step.toString(16).padStart(2, "0")}`);
+      throw new Error(`Invalid key exchange step: 0x${step.toString(16).padStart(2, '0')}`);
     }
   }
 

@@ -1,7 +1,7 @@
 // Reassembles containers into a complete payload.
 
-import { Container } from "./container";
-import { ContainerType } from "./containerTypes";
+import { Container } from './container';
+import { ContainerType } from './containerTypes';
 
 interface AssemblyState {
   totalLength: number;

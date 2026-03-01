@@ -17,7 +17,7 @@ import {
   controlCmdFromValue,
   FIRST_HEADER_SIZE,
   SUBSEQUENT_HEADER_SIZE,
-} from "./containerTypes";
+} from './containerTypes';
 
 /** Pack type(2) | control_cmd(4) | reserved(2) into a single byte. */
 export function packFlags(type: ContainerType, cmd: ControlCmd = ControlCmd.NONE): number {

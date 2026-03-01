@@ -1,7 +1,7 @@
-import { Container, ContainerAssembler, ContainerType, makeTimeoutRequest } from "../src";
+import { Container, ContainerAssembler, ContainerType, makeTimeoutRequest } from '../src';
 
-describe("ContainerAssembler", () => {
-  test("single container assembly", () => {
+describe('ContainerAssembler', () => {
+  test('single container assembly', () => {
     const assembler = new ContainerAssembler();
     const c = new Container({
       transactionId: 0,
@@ -14,7 +14,7 @@ describe("ContainerAssembler", () => {
     expect(result).toEqual(new Uint8Array([0x68, 0x65, 0x6c, 0x6c, 0x6f]));
   });
 
-  test("multi container assembly", () => {
+  test('multi container assembly', () => {
     const assembler = new ContainerAssembler();
     const c1 = new Container({
       transactionId: 1,
@@ -34,7 +34,7 @@ describe("ContainerAssembler", () => {
     expect(result).toEqual(new Uint8Array([0x68, 0x65, 0x6c, 0x6c, 0x6f, 0x20, 0x77, 0x6f]));
   });
 
-  test("sequence gap discards transaction", () => {
+  test('sequence gap discards transaction', () => {
     const assembler = new ContainerAssembler();
     const c1 = new Container({
       transactionId: 2,
@@ -55,13 +55,13 @@ describe("ContainerAssembler", () => {
     expect(assembler.hasTransaction(2)).toBe(false);
   });
 
-  test("control container ignored", () => {
+  test('control container ignored', () => {
     const assembler = new ContainerAssembler();
     const c = makeTimeoutRequest(0);
     expect(assembler.feed(c)).toBeNull();
   });
 
-  test("subsequent without first ignored", () => {
+  test('subsequent without first ignored', () => {
     const assembler = new ContainerAssembler();
     const c = new Container({
       transactionId: 99,
