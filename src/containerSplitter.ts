@@ -1,12 +1,12 @@
 // Splits a payload into MTU-sized containers.
 
-import { Container } from "./container";
+import { Container } from './container';
 import {
   ContainerType,
   ATT_OVERHEAD,
   FIRST_HEADER_SIZE,
   SUBSEQUENT_HEADER_SIZE,
-} from "./containerTypes";
+} from './containerTypes';
 
 /** Splits a payload into containers respecting MTU. */
 export class ContainerSplitter {

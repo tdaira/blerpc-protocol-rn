@@ -4,10 +4,10 @@ import {
   ControlCmd,
   FIRST_HEADER_SIZE,
   SUBSEQUENT_HEADER_SIZE,
-} from "../src";
+} from '../src';
 
-describe("Container serialize/deserialize", () => {
-  test("FIRST container roundtrip", () => {
+describe('Container serialize/deserialize', () => {
+  test('FIRST container roundtrip', () => {
     const c = new Container({
       transactionId: 42,
       sequenceNumber: 0,
@@ -24,7 +24,7 @@ describe("Container serialize/deserialize", () => {
     expect(c2.payload).toEqual(new Uint8Array([0x01, 0x02, 0x03]));
   });
 
-  test("SUBSEQUENT container roundtrip", () => {
+  test('SUBSEQUENT container roundtrip', () => {
     const c = new Container({
       transactionId: 7,
       sequenceNumber: 3,
@@ -39,7 +39,7 @@ describe("Container serialize/deserialize", () => {
     expect(c2.payload).toEqual(new Uint8Array([0xaa, 0xbb]));
   });
 
-  test("CONTROL container roundtrip", () => {
+  test('CONTROL container roundtrip', () => {
     const payload = new Uint8Array(2);
     new DataView(payload.buffer).setUint16(0, 500, true);
     const c = new Container({
@@ -57,7 +57,7 @@ describe("Container serialize/deserialize", () => {
     expect(bd.getUint16(0, true)).toBe(500);
   });
 
-  test("flags byte encoding", () => {
+  test('flags byte encoding', () => {
     // type=0b11 in bits 7-6 => 0xC0, control_cmd=0x2 in bits 5-2 => 0x08
     const c = new Container({
       transactionId: 0,
@@ -69,11 +69,11 @@ describe("Container serialize/deserialize", () => {
     expect(data[2]).toBe(0xc0 | 0x08); // 0xC8
   });
 
-  test("deserialize too short", () => {
+  test('deserialize too short', () => {
     expect(() => Container.deserialize(new Uint8Array([0x00, 0x01]))).toThrow();
   });
 
-  test("FIRST container header size", () => {
+  test('FIRST container header size', () => {
     const c = new Container({
       transactionId: 0,
       sequenceNumber: 0,
@@ -84,7 +84,7 @@ describe("Container serialize/deserialize", () => {
     expect(data.length).toBe(FIRST_HEADER_SIZE);
   });
 
-  test("SUBSEQUENT container header size", () => {
+  test('SUBSEQUENT container header size', () => {
     const c = new Container({
       transactionId: 0,
       sequenceNumber: 0,

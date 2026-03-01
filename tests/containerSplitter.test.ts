@@ -4,10 +4,10 @@ import {
   ATT_OVERHEAD,
   FIRST_HEADER_SIZE,
   SUBSEQUENT_HEADER_SIZE,
-} from "../src";
+} from '../src';
 
-describe("ContainerSplitter", () => {
-  test("small payload single container", () => {
+describe('ContainerSplitter', () => {
+  test('small payload single container', () => {
     const splitter = new ContainerSplitter(247);
     const containers = splitter.split(new Uint8Array([0x68, 0x65, 0x6c, 0x6c, 0x6f]), 0);
     expect(containers.length).toBe(1);
@@ -16,7 +16,7 @@ describe("ContainerSplitter", () => {
     expect(containers[0].payload).toEqual(new Uint8Array([0x68, 0x65, 0x6c, 0x6c, 0x6f]));
   });
 
-  test("large payload multiple containers", () => {
+  test('large payload multiple containers', () => {
     const mtu = 27;
     const splitter = new ContainerSplitter(mtu);
     const effective = mtu - ATT_OVERHEAD; // 24
@@ -44,7 +44,7 @@ describe("ContainerSplitter", () => {
     expect(new Uint8Array(reassembled)).toEqual(payload);
   });
 
-  test("boundary payload exactly first max", () => {
+  test('boundary payload exactly first max', () => {
     const mtu = 30;
     const splitter = new ContainerSplitter(mtu);
     const effective = mtu - ATT_OVERHEAD; // 27
@@ -56,7 +56,7 @@ describe("ContainerSplitter", () => {
     expect(containers[0].payload).toEqual(payload);
   });
 
-  test("boundary payload one byte over first max", () => {
+  test('boundary payload one byte over first max', () => {
     const mtu = 30;
     const splitter = new ContainerSplitter(mtu);
     const effective = mtu - ATT_OVERHEAD;
@@ -69,7 +69,7 @@ describe("ContainerSplitter", () => {
     expect(containers[1].payload.length).toBe(1);
   });
 
-  test("empty payload", () => {
+  test('empty payload', () => {
     const splitter = new ContainerSplitter(247);
     const containers = splitter.split(new Uint8Array(0), 0);
     expect(containers.length).toBe(1);
@@ -77,7 +77,7 @@ describe("ContainerSplitter", () => {
     expect(containers[0].payload.length).toBe(0);
   });
 
-  test("transaction ID auto increment", () => {
+  test('transaction ID auto increment', () => {
     const splitter = new ContainerSplitter(247);
     const c1 = splitter.split(new Uint8Array([0x61]));
     const c2 = splitter.split(new Uint8Array([0x62]));
@@ -85,7 +85,7 @@ describe("ContainerSplitter", () => {
     expect(c2[0].transactionId).toBe(1);
   });
 
-  test("transaction ID wraps at 256", () => {
+  test('transaction ID wraps at 256', () => {
     const splitter = new ContainerSplitter(247);
     // Advance counter to 255
     for (let i = 0; i < 255; i++) {

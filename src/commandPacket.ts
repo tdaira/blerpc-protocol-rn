@@ -16,7 +16,7 @@ export enum CommandType {
 }
 
 const textEncoder = new TextEncoder();
-const textDecoder = new TextDecoder("ascii");
+const textDecoder = new TextDecoder('utf-8');
 
 /** A single command packet. */
 export class CommandPacket {
@@ -71,7 +71,7 @@ export class CommandPacket {
 
     let offset = 2;
     if (data.length < offset + cmdNameLen + 2) {
-      throw new Error("Command packet truncated");
+      throw new Error('Command packet truncated');
     }
 
     const cmdName = textDecoder.decode(data.slice(offset, offset + cmdNameLen));

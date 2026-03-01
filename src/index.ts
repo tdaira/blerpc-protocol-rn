@@ -13,15 +13,15 @@ export {
   SUBSEQUENT_HEADER_SIZE,
   CONTROL_HEADER_SIZE,
   ATT_OVERHEAD,
-} from "./containerTypes";
+} from './containerTypes';
 
-export { packFlags, unpackFlags, Container } from "./container";
+export { packFlags, unpackFlags, Container } from './container';
 
-export { ContainerSplitter } from "./containerSplitter";
+export { ContainerSplitter } from './containerSplitter';
 
-export { ContainerAssembler } from "./containerAssembler";
+export { ContainerAssembler } from './containerAssembler';
 
-export { CommandType, CommandPacket } from "./commandPacket";
+export { CommandType, CommandPacket } from './commandPacket';
 
 export {
   makeTimeoutRequest,
@@ -32,7 +32,7 @@ export {
   makeCapabilitiesResponse,
   makeErrorResponse,
   makeKeyExchange,
-} from "./controlContainers";
+} from './controlContainers';
 
 export {
   DIRECTION_C2P,
@@ -48,4 +48,4 @@ export {
   CentralKeyExchange,
   PeripheralKeyExchange,
   centralPerformKeyExchange,
-} from "./crypto";
+} from './crypto';

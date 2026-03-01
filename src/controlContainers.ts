@@ -1,7 +1,7 @@
 // Factory functions for control containers.
 
-import { Container } from "./container";
-import { ContainerType, ControlCmd } from "./containerTypes";
+import { Container } from './container';
+import { ContainerType, ControlCmd } from './containerTypes';
 
 /** Create a timeout request control container (Central -> Peripheral). */
 export function makeTimeoutRequest(transactionId: number, sequenceNumber = 0): Container {
