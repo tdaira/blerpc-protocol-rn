@@ -761,6 +761,7 @@ describe('centralPerformKeyExchange', () => {
     const session = await centralPerformKeyExchange({
       send: mockSend,
       receive: mockReceive,
+      pinIdentity: false,
     });
 
     // Verify session works
@@ -819,6 +820,66 @@ describe('centralPerformKeyExchange', () => {
     });
     expect(session).toBeTruthy();
     expect(seenKeys[0]).toEqual(periphEdPub);
+  });
+
+  // TOFU identity pinning
+  function makeStore() {
+    const map = new Map<string, string>();
+    return {
+      map,
+      get: (id: string): string | null => map.get(id) ?? null,
+      put: (id: string, hex: string): void => {
+        map.set(id, hex);
+      },
+    };
+  }
+
+  async function runTofu(
+    priv: Uint8Array,
+    pub: Uint8Array,
+    store?: { get(id: string): string | null; put(id: string, hex: string): void },
+    deviceId?: string,
+    pinIdentity = true,
+  ) {
+    const periphKx = new PeripheralKeyExchange(priv, pub);
+    const payloads: Uint8Array[] = [];
+    return centralPerformKeyExchange({
+      send: async (p: Uint8Array) => {
+        const [response] = periphKx.handleStep(p);
+        payloads.push(response);
+      },
+      receive: async () => payloads.shift()!,
+      knownKeys: store,
+      deviceId,
+      pinIdentity,
+    });
+  }
+
+  test('TOFU pins then matches', async () => {
+    const [priv, pub] = BlerpcCrypto.generateEd25519KeyPair();
+    const store = makeStore();
+    await runTofu(priv, pub, store, 'dev-1'); // first use: pinned
+    expect(store.map.size).toBe(1);
+    await runTofu(priv, pub, store, 'dev-1'); // same key: matches
+  });
+
+  test('TOFU rejects changed key', async () => {
+    const store = makeStore();
+    const [p1, pub1] = BlerpcCrypto.generateEd25519KeyPair();
+    await runTofu(p1, pub1, store, 'dev-1'); // pin
+    const [p2, pub2] = BlerpcCrypto.generateEd25519KeyPair();
+    await expect(runTofu(p2, pub2, store, 'dev-1')).rejects.toThrow(/rejected/);
+  });
+
+  test('fail-closed without store', async () => {
+    const [priv, pub] = BlerpcCrypto.generateEd25519KeyPair();
+    await expect(runTofu(priv, pub)).rejects.toThrow(/pinning/);
+  });
+
+  test('opt out skips pinning', async () => {
+    const [priv, pub] = BlerpcCrypto.generateEd25519KeyPair();
+    const session = await runTofu(priv, pub, undefined, undefined, false);
+    expect(session).toBeTruthy();
   });
 });
 

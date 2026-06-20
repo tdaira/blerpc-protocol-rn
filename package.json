@@ -1,6 +1,6 @@
 {
   "name": "@blerpc/protocol-rn",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Pure TypeScript protocol library for blerpc — container, command, and encryption layers for BLE RPC.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -13,7 +13,8 @@
     "lint": "eslint src/ tests/",
     "format": "prettier --write 'src/**/*.ts' 'tests/**/*.ts'",
     "format:check": "prettier --check 'src/**/*.ts' 'tests/**/*.ts'",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "prepare": "npm run build"
   },
   "repository": {
     "type": "git",

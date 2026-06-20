@@ -48,4 +48,6 @@ export {
   CentralKeyExchange,
   PeripheralKeyExchange,
   centralPerformKeyExchange,
+  tofuVerify,
 } from './crypto';
+export type { KnownKeyStore } from './crypto';

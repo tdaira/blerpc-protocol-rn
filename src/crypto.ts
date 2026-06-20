@@ -452,12 +452,78 @@ export class PeripheralKeyExchange {
   }
 }
 
-/** Perform the 4-step central key exchange using send/receive callbacks. */
+/**
+ * TOFU (Trust On First Use) store for peripheral Ed25519 identity keys.
+ *
+ * The E2E handshake signature binds only the ephemeral X25519 keys, not the
+ * peripheral's long-term identity key, so MitM resistance depends on the
+ * central pinning that identity. Implementations supply platform-appropriate
+ * persistence (AsyncStorage, …); this library owns the pinning policy and
+ * logic ({@link tofuVerify}).
+ */
+export interface KnownKeyStore {
+  /** Stored hex-encoded Ed25519 public key for `deviceId`, or null if unknown. */
+  get(deviceId: string): string | null | undefined;
+  /** Persist the hex-encoded Ed25519 public key for `deviceId`. */
+  put(deviceId: string, hexEd25519Pubkey: string): void;
+}
+
+/**
+ * TOFU verification against a {@link KnownKeyStore}: trust (and pin) the key on
+ * first use, and reject a key that differs from the pinned one afterwards.
+ */
+export function tofuVerify(
+  store: KnownKeyStore,
+  deviceId: string,
+  ed25519Pubkey: Uint8Array,
+): boolean {
+  const hex = Array.from(ed25519Pubkey)
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+  const stored = store.get(deviceId);
+  if (stored == null) {
+    store.put(deviceId, hex);
+    return true;
+  }
+  return stored === hex;
+}
+
+/**
+ * Perform the 4-step central key exchange using send/receive callbacks.
+ *
+ * Identity pinning is **on by default** (fail-closed): pass `knownKeys` and
+ * `deviceId` to pin the peripheral's Ed25519 identity (TOFU), or set
+ * `pinIdentity` to false to opt out (encrypted but NOT authenticated).
+ * `verifyKeyCb` is an escape hatch for custom verification and takes
+ * precedence when provided. Throws if pinning is on (the default) but no
+ * `knownKeys`/`deviceId` and no `verifyKeyCb` were supplied.
+ */
 export async function centralPerformKeyExchange(options: {
   send: (payload: Uint8Array) => Promise<void>;
   receive: () => Promise<Uint8Array>;
+  knownKeys?: KnownKeyStore;
+  deviceId?: string;
+  pinIdentity?: boolean;
   verifyKeyCb?: (key: Uint8Array) => boolean;
 }): Promise<BlerpcCryptoSession> {
+  const pinIdentity = options.pinIdentity ?? true;
+  let effectiveVerifyCb: ((key: Uint8Array) => boolean) | undefined;
+  if (options.verifyKeyCb) {
+    effectiveVerifyCb = options.verifyKeyCb;
+  } else if (!pinIdentity) {
+    effectiveVerifyCb = undefined;
+  } else if (options.knownKeys && options.deviceId != null) {
+    const store = options.knownKeys;
+    const id = options.deviceId;
+    effectiveVerifyCb = (pub) => tofuVerify(store, id, pub);
+  } else {
+    throw new Error(
+      'Identity pinning is on by default but no KnownKeyStore/deviceId was ' +
+        'provided. Pass knownKeys and deviceId to pin the peripheral identity ' +
+        '(TOFU), or set pinIdentity: false to opt out (encrypted but unauthenticated).',
+    );
+  }
+
   const kx = new CentralKeyExchange();
 
   // Step 1: Send central's ephemeral public key
@@ -468,7 +534,7 @@ export async function centralPerformKeyExchange(options: {
   const step2 = await options.receive();
 
   // Step 2 -> Step 3: Verify and produce confirmation
-  const step3 = kx.processStep2(step2, options.verifyKeyCb);
+  const step3 = kx.processStep2(step2, effectiveVerifyCb);
   await options.send(step3);
 
   // Step 4: Receive peripheral's confirmation
