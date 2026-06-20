@@ -102,7 +102,9 @@ export class Container {
       const totalLength = view.getUint16(3, true);
       const payloadLen = data[5];
       if (data.length < FIRST_HEADER_SIZE + payloadLen) {
-        throw new Error(`FIRST container payload truncated: need ${FIRST_HEADER_SIZE + payloadLen}, got ${data.length}`);
+        throw new Error(
+          `FIRST container payload truncated: need ${FIRST_HEADER_SIZE + payloadLen}, got ${data.length}`,
+        );
       }
       const payload = data.slice(FIRST_HEADER_SIZE, FIRST_HEADER_SIZE + payloadLen);
       return new Container({
@@ -116,7 +118,9 @@ export class Container {
     } else {
       const payloadLen = data[3];
       if (data.length < SUBSEQUENT_HEADER_SIZE + payloadLen) {
-        throw new Error(`Container payload truncated: need ${SUBSEQUENT_HEADER_SIZE + payloadLen}, got ${data.length}`);
+        throw new Error(
+          `Container payload truncated: need ${SUBSEQUENT_HEADER_SIZE + payloadLen}, got ${data.length}`,
+        );
       }
       const payload = data.slice(SUBSEQUENT_HEADER_SIZE, SUBSEQUENT_HEADER_SIZE + payloadLen);
       return new Container({

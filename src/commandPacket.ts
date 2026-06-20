@@ -82,7 +82,9 @@ export class CommandPacket {
     offset += 2;
 
     if (data.length < offset + dataLen) {
-      throw new Error(`Command packet data truncated: need ${offset + dataLen}, got ${data.length}`);
+      throw new Error(
+        `Command packet data truncated: need ${offset + dataLen}, got ${data.length}`,
+      );
     }
     const payload = data.slice(offset, offset + dataLen);
     return new CommandPacket({
